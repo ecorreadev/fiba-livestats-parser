@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>FIBA LiveStats → JSON</title>
+</head>
+<body>
+
+<h2>FIBA LiveStats → JSON</h2>
+
+<input id="url" style="width:500px"
+       placeholder="Pegá el link de FIBA" />
+
+<button onclick="run()">Procesar</button>
+
+<br><br>
+
+<textarea id="out" rows="30" cols="120"></textarea>
+
+<script>
+async function run() {
+  const url = document.getElementById('url').value;
+
+  const res = await fetch('/api/parse', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
+
+  const json = await res.json();
+  document.getElementById('out').value =
+    JSON.stringify(json, null, 2);
+}
+</script>
+
+</body>
+</html>
