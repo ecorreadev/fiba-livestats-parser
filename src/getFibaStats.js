@@ -5,7 +5,8 @@ const PAGE_URL = `https://fibalivestats.dcd.shared.geniussports.com/u/FUBB/${GAM
 
 module.exports = async function getFibaStats(GAME_ID) {
     const browser = await puppeteer.launch({
-        headless: 'new'
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
     const page = await browser.newPage();
