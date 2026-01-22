@@ -185,4 +185,6 @@ module.exports = async function getFibaStats(GAME_ID) {
 
     console.log(JSON.stringify(result, null, 2));
 
+    return result;
+
 };
