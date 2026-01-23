@@ -2,6 +2,15 @@
  * Mappers para transformar datos crudos de FIBA a estructura limpia
  */
 
+const capitalize = (str) => {
+    if (!str) return '';
+    return str
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
 const mapPlayer = (p) => ({
     titular: Boolean(p.starter),
 
@@ -103,8 +112,18 @@ const mapReferees = (officials) => {
     return referees;
 };
 
+const mapGameResult = (team1, team2) => {
+    const name1 = capitalize(team1.name);
+    const score1 = team1.tot_sPoints;
+    const name2 = capitalize(team2.name);
+    const score2 = team2.tot_sPoints;
+
+    return `${name1} ${score1} - ${name2} ${score2}`;
+};
+
 module.exports = {
     mapPlayer,
     mapTeamTotals,
-    mapReferees
+    mapReferees,
+    mapGameResult
 };

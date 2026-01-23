@@ -1,6 +1,6 @@
 const { launchBrowser, setupUserAgent } = require('./browser');
 const { setupDataCapture } = require('./dataCapture');
-const { mapPlayer, mapTeamTotals, mapReferees } = require('./mappers');
+const { mapPlayer, mapTeamTotals, mapReferees, mapGameResult } = require('./mappers');
 const {
     processPlayerStats,
     identifyTeams,
@@ -43,6 +43,7 @@ module.exports = async function getFibaStats(GAME_ID) {
 
     // Armar resultado
     const result = {
+        resultado: mapGameResult(aguada, adversario),
         jueces: mapReferees(gameData.officials),
         aguadaStats,
         totalAguadaStats: mapTeamTotals(aguada),
