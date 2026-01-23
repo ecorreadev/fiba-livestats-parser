@@ -11,25 +11,44 @@
 <input id="url" style="width:500px"
        placeholder="Pegá el link de FIBA" />
 
-<button onclick="run()">Procesar</button>
+<button id="processBtn" onclick="run()">Procesar</button>
 
 <br><br>
+
+<div id="status" style="color: green; display: none;">Parseando...</div>
+
+<br>
 
 <textarea id="out" rows="30" cols="120"></textarea>
 
 <script>
 async function run() {
   const url = document.getElementById('url').value;
+  const btn = document.getElementById('processBtn');
+  const status = document.getElementById('status');
 
-  const res = await fetch('/api/parse', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url })
-  });
+  // Mostrar mensaje y deshabilitar botón
+  status.style.display = 'block';
+  btn.disabled = true;
 
-  const json = await res.json();
-  document.getElementById('out').value =
-    JSON.stringify(json, null, 2);
+  try {
+    const res = await fetch('/api/parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+
+    const json = await res.json();
+    document.getElementById('out').value =
+      JSON.stringify(json, null, 2);
+  } catch (error) {
+    console.error('Error:', error);
+    document.getElementById('out').value = 'Error al procesar la URL';
+  } finally {
+    // Ocultar mensaje y habilitar botón
+    status.style.display = 'none';
+    btn.disabled = false;
+  }
 }
 </script>
 
