@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(express.static('public'));
 
 app.post('/api/parse', async (req, res) => {
-    const { url } = req.body;
+    const { url, userData } = req.body;
 
     if (!url || !url.includes('fibalivestats')) {
         return res.status(400).json({ error: 'URL inválida' });
@@ -17,6 +17,16 @@ app.post('/api/parse', async (req, res) => {
     try {
         const gameId = url.split('/').filter(Boolean).pop();
         const data = await getFibaStats(gameId);
+        
+        // Agregar datos del usuario al resultado
+        if (userData) {
+            const result = {
+                ...userData,
+                ...data
+            };
+            return res.json(result);
+        }
+        
         res.json(data);
     } catch (err) {
         console.error(err);

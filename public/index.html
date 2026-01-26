@@ -3,33 +3,137 @@
 <head>
 <meta charset="UTF-8">
 <title>FIBA LiveStats → JSON</title>
+<style>
+  body { font-family: Arial, sans-serif; }
+  .container { max-width: 900px; margin: 20px auto; }
+  .inputs-section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .input-row.full { grid-template-columns: 1fr; }
+  input, textarea, button { padding: 8px; font-size: 14px; }
+  input[type="text"], input[type="number"] { width: 100%; box-sizing: border-box; }
+  .checkbox-group { display: flex; gap: 20px; flex-wrap: wrap; }
+  .checkbox-group label { display: flex; align-items: center; gap: 5px; }
+  button { cursor: pointer; padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 3px; }
+  button:hover { background: #0056b3; }
+  button:disabled { background: #ccc; cursor: not-allowed; }
+  .button-group { display: flex; gap: 10px; margin: 15px 0; }
+  textarea { width: 100%; box-sizing: border-box; font-family: monospace; }
+  .copy-btn { padding: 8px 15px; background: #28a745; }
+  .copy-btn:hover { background: #218838; }
+</style>
 </head>
 <body>
 
-<h2>FIBA LiveStats → JSON</h2>
+<div class="container">
+  <h2>FIBA LiveStats → JSON</h2>
 
-<input id="url" style="width:500px"
-       placeholder="Pegá el link de FIBA" />
+  <div class="inputs-section">
+    <h3>Información del Partido</h3>
+    
+    <div class="input-row full">
+      <input id="url" type="text" placeholder="Pegá el link de FIBA" />
+    </div>
 
-<button onclick="run()">Procesar</button>
+    <div class="input-row">
+      <input id="torneo" type="text" placeholder="Torneo" />
+      <input id="liga" type="text" placeholder="Liga" />
+    </div>
 
-<br><br>
+    <div class="input-row">
+      <input id="cancha" type="text" placeholder="Cancha" />
+      <input id="fecha" type="text" placeholder="Fecha (Ej: 2024-01-26)" />
+    </div>
 
-<textarea id="out" rows="30" cols="120"></textarea>
+    <div class="input-row">
+      <input id="fechaLiga" type="number" placeholder="Fecha Liga" />
+      <input id="dia" type="number" placeholder="Día" />
+    </div>
+
+    <div class="input-row">
+      <input id="mes" type="number" placeholder="Mes" />
+    </div>
+
+    <div class="checkbox-group">
+      <label>
+        <input id="playoffs" type="checkbox" /> Playoffs
+      </label>
+      <label>
+        <input id="superLiga" type="checkbox" /> SuperLiga
+      </label>
+      <label>
+        <input id="liguilla" type="checkbox" /> Liguilla
+      </label>
+      <label>
+        <input id="reclasificatorio" type="checkbox" /> Reclasificatorio
+      </label>
+    </div>
+  </div>
+
+  <div class="button-group">
+    <button id="processBtn" onclick="run()" disabled>Procesar</button>
+    <button class="copy-btn" id="copyBtn" onclick="copyToClipboard()" style="display:none;">Copiar Resultado</button>
+  </div>
+
+  <textarea id="out" rows="30" cols="120"></textarea>
+</div>
 
 <script>
+// Validar que todos los inputs estén llenos
+function validateInputs() {
+  const requiredFields = [
+    'url', 'torneo', 'liga', 'cancha', 'fecha', 'fechaLiga', 'dia', 'mes'
+  ];
+  
+  const allFilled = requiredFields.every(id => {
+    const value = document.getElementById(id).value;
+    return value && value.trim() !== '';
+  });
+
+  document.getElementById('processBtn').disabled = !allFilled;
+}
+
+// Agregar listeners a todos los inputs
+document.getElementById('url').addEventListener('input', validateInputs);
+document.getElementById('torneo').addEventListener('input', validateInputs);
+document.getElementById('liga').addEventListener('input', validateInputs);
+document.getElementById('cancha').addEventListener('input', validateInputs);
+document.getElementById('fecha').addEventListener('input', validateInputs);
+document.getElementById('fechaLiga').addEventListener('input', validateInputs);
+document.getElementById('dia').addEventListener('input', validateInputs);
+document.getElementById('mes').addEventListener('input', validateInputs);
+
 async function run() {
   const url = document.getElementById('url').value;
+  const userData = {
+    torneo: document.getElementById('torneo').value,
+    liga: document.getElementById('liga').value,
+    playoffs: document.getElementById('playoffs').checked,
+    superLiga: document.getElementById('superLiga').checked,
+    liguilla: document.getElementById('liguilla').checked,
+    reclasificatorio: document.getElementById('reclasificatorio').checked,
+    fechaLiga: parseInt(document.getElementById('fechaLiga').value),
+    fecha: document.getElementById('fecha').value,
+    dia: parseInt(document.getElementById('dia').value),
+    mes: parseInt(document.getElementById('mes').value),
+    cancha: document.getElementById('cancha').value
+  };
 
   const res = await fetch('/api/parse', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url })
+    body: JSON.stringify({ url, userData })
   });
 
   const json = await res.json();
-  document.getElementById('out').value =
-    JSON.stringify(json, null, 2);
+  document.getElementById('out').value = JSON.stringify(json, null, 2);
+  document.getElementById('copyBtn').style.display = 'inline-block';
+}
+
+function copyToClipboard() {
+  const textarea = document.getElementById('out');
+  textarea.select();
+  document.execCommand('copy');
+  alert('Resultado copiado al portapapeles');
 }
 </script>
 

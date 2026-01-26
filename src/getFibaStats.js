@@ -42,15 +42,25 @@ module.exports = async function getFibaStats(GAME_ID) {
     const adversarioStats = processPlayerStats(adversario.pl, mapPlayer);
 
     // Armar resultado
+    const totalAguadaStats = mapTeamTotals(aguada);
+    const totalAdversarioStats = mapTeamTotals(adversario);
+    const diferencia = totalAguadaStats.totalPuntos - totalAdversarioStats.totalPuntos;
+    const aguadaGano = totalAguadaStats.totalPuntos > totalAdversarioStats.totalPuntos;
+    const local = teams[0] === aguada;
+
     const result = {
         resultado: mapGameResult(aguada, adversario),
         jueces: mapReferees(gameData.officials),
+        local,
         aguadaStats,
-        totalAguadaStats: mapTeamTotals(aguada),
+        totalAguadaStats,
         dtAguada: getCoachName(aguada),
+        adversario: adversario.name,
         adversarioStats,
-        totalAdversarioStats: mapTeamTotals(adversario),
-        dtAdversario: getCoachName(adversario)
+        totalAdversarioStats,
+        dtAdversario: getCoachName(adversario),
+        diferencia,
+        aguadaGano
     };
 
     console.log(JSON.stringify(result, null, 2));
