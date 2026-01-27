@@ -55,6 +55,9 @@
 
     <div class="checkbox-group">
       <label>
+        <input id="temporadaRegular" type="checkbox" /> Temporada Regular
+      </label>
+      <label>
         <input id="playoffs" type="checkbox" /> Playoffs
       </label>
       <label>
@@ -107,6 +110,7 @@ async function run() {
   const userData = {
     torneo: document.getElementById('torneo').value,
     liga: document.getElementById('liga').value,
+    temporadaRegular: document.getElementById('temporadaRegular').checked,
     playoffs: document.getElementById('playoffs').checked,
     superLiga: document.getElementById('superLiga').checked,
     liguilla: document.getElementById('liguilla').checked,
