@@ -7,6 +7,45 @@ const {
     getCoachName
 } = require('./parsers');
 
+const generateCuartos = (aguada, adversario) => {
+    const aguadaScores = [
+        parseInt(aguada.p1_score) || 0,
+        parseInt(aguada.p2_score) || 0,
+        parseInt(aguada.p3_score) || 0,
+        parseInt(aguada.p4_score) || 0
+    ];
+
+    const adversarioScores = [
+        parseInt(adversario.p1_score) || 0,
+        parseInt(adversario.p2_score) || 0,
+        parseInt(adversario.p3_score) || 0,
+        parseInt(adversario.p4_score) || 0
+    ];
+
+    const cuartos = [];
+    let aguadaAccumulated = 0;
+    let adversarioAccumulated = 0;
+
+    for (let i = 0; i < 4; i++) {
+        const aguadaParcial = aguadaScores[i];
+        const adversarioParcial = adversarioScores[i];
+
+        aguadaAccumulated += aguadaParcial;
+        adversarioAccumulated += adversarioParcial;
+
+        cuartos.push({
+            aguadaTotal: aguadaAccumulated,
+            adversarioTotal: adversarioAccumulated,
+            diferenciaTotal: aguadaAccumulated - adversarioAccumulated,
+            aguadaParcial,
+            adversarioParcial,
+            diferenciaParcial: aguadaParcial - adversarioParcial
+        });
+    }
+
+    return cuartos;
+};
+
 module.exports = async function getFibaStats(GAME_ID) {
     const PAGE_URL = `https://fibalivestats.dcd.shared.geniussports.com/u/FUBB/${GAME_ID}/`;
 
@@ -47,10 +86,12 @@ module.exports = async function getFibaStats(GAME_ID) {
     const diferencia = totalAguadaStats.totalPuntos - totalAdversarioStats.totalPuntos;
     const ganado = totalAguadaStats.totalPuntos > totalAdversarioStats.totalPuntos;
     const local = teams[0] === aguada;
+    const cuartos = generateCuartos(aguada, adversario);
 
     const result = {
         adversario: adversario.name,
         local,
+        cuartos,
         jueces: mapReferees(gameData.officials),
         resultado: mapGameResult(aguada, adversario),
         diferencia,
