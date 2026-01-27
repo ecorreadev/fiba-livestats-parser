@@ -20,6 +20,7 @@
   textarea { width: 100%; box-sizing: border-box; font-family: monospace; }
   .copy-btn { padding: 8px 15px; background: #28a745; }
   .copy-btn:hover { background: #218838; }
+  .status-message { color: green; font-weight: bold; margin-top: 10px; font-size: 16px; display: none; }
 </style>
 </head>
 <body>
@@ -77,6 +78,8 @@
     <button class="copy-btn" id="copyBtn" onclick="copyToClipboard()" style="display:none;">Copiar Resultado</button>
   </div>
 
+  <div class="status-message" id="statusMessage"></div>
+
   <textarea id="out" rows="30" cols="120"></textarea>
 </div>
 
@@ -107,6 +110,15 @@ document.getElementById('mes').addEventListener('input', validateInputs);
 
 async function run() {
   const url = document.getElementById('url').value;
+  const statusDiv = document.getElementById('statusMessage');
+  
+  // Mostrar el div de estado
+  statusDiv.style.display = 'block';
+  
+  function updateStatus(message) {
+    statusDiv.textContent = message;
+  }
+  
   const userData = {
     torneo: document.getElementById('torneo').value,
     liga: document.getElementById('liga').value,
@@ -122,15 +134,40 @@ async function run() {
     cancha: document.getElementById('cancha').value
   };
 
-  const res = await fetch('/api/parse', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url, userData })
-  });
+  try {
+    updateStatus('⏳ Iniciando proceso...');
+    
+    updateStatus('📡 Extrayendo ID del partido...');
+    
+    updateStatus('🌐 Conectando con FIBA LiveStats...');
+    
+    updateStatus('📥 Descargando datos del partido...');
 
-  const json = await res.json();
-  document.getElementById('out').value = JSON.stringify(json, null, 2);
-  document.getElementById('copyBtn').style.display = 'inline-block';
+    const res = await fetch('/api/parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, userData })
+    });
+
+    updateStatus('🔄 Procesando información...');
+
+    if (!res.ok) {
+      throw new Error('Error en la respuesta del servidor');
+    }
+
+    const json = await res.json();
+    
+    updateStatus('📊 Estructurando datos...');
+    
+    document.getElementById('out').value = JSON.stringify(json, null, 2);
+    
+    updateStatus('✅ ¡Procesamiento completado exitosamente!');
+    
+    document.getElementById('copyBtn').style.display = 'inline-block';
+  } catch (error) {
+    updateStatus('❌ Error: ' + error.message);
+    statusDiv.style.color = 'red';
+  }
 }
 
 function copyToClipboard() {
