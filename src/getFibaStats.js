@@ -73,8 +73,8 @@ module.exports = async function getFibaStats(GAME_ID) {
     }
 
     // Procesar datos
-    const teams = Object.values(gameData.tm);
-    const { aguada, adversario } = identifyTeams(teams, gameData);
+    const teams = Object.values(gameData.tm || {});
+    const { aguada, adversario } = identifyTeams(teams);
 
     // Procesar estadísticas de jugadores
     const aguadaStats = processPlayerStats(aguada.pl, mapPlayer);
@@ -83,13 +83,15 @@ module.exports = async function getFibaStats(GAME_ID) {
     // Armar resultado
     const totalAguadaStats = mapTeamTotals(aguada);
     const totalAdversarioStats = mapTeamTotals(adversario);
-    const diferencia = totalAguadaStats.totalPuntos - totalAdversarioStats.totalPuntos;
-    const ganado = totalAguadaStats.totalPuntos > totalAdversarioStats.totalPuntos;
+    const puntosAguada = Number(totalAguadaStats.totalPuntos) || 0;
+    const puntosAdversario = Number(totalAdversarioStats.totalPuntos) || 0;
+    const diferencia = puntosAguada - puntosAdversario;
+    const ganado = puntosAguada > puntosAdversario;
     const local = teams[0] === aguada;
     const cuartos = generateCuartos(aguada, adversario);
 
     const result = {
-        adversario: adversario.name,
+        adversario: adversario.name || null,
         local,
         cuartos,
         jueces: mapReferees(gameData.officials),

@@ -96,11 +96,11 @@ const mapTeamTotals = (t) => ({
     mayorRacha: t.tot_sBiggestScoringRun
 });
 
-const mapReferees = (officials) => {
+const mapReferees = (officials = {}) => {
     const referees = [];
 
     for (let i = 1; i <= 3; i++) {
-        const referee = officials[`referee${i}`];
+        const referee = officials?.[`referee${i}`];
         if (referee) {
             const nombre = [referee.firstName, referee.familyName]
                 .filter(Boolean)
@@ -112,11 +112,11 @@ const mapReferees = (officials) => {
     return referees;
 };
 
-const mapGameResult = (team1, team2) => {
-    const name1 = capitalize(team1.name);
-    const score1 = team1.tot_sPoints;
-    const name2 = capitalize(team2.name);
-    const score2 = team2.tot_sPoints;
+const mapGameResult = (team1 = {}, team2 = {}) => {
+    const name1 = capitalize(team1.name) || 'Equipo 1';
+    const score1 = Number(team1.tot_sPoints) || 0;
+    const name2 = capitalize(team2.name) || 'Equipo 2';
+    const score2 = Number(team2.tot_sPoints) || 0;
 
     return `${name1} ${score1} - ${name2} ${score2}`;
 };

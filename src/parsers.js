@@ -19,7 +19,7 @@ const sortPlayers = (a, b) => {
     return numA - numB;
 };
 
-const processPlayerStats = (players, mapPlayer) => {
+const processPlayerStats = (players = {}, mapPlayer) => {
     return Object.values(players)
         .map(mapPlayer)
         .filter(playedFilter)
@@ -27,19 +27,37 @@ const processPlayerStats = (players, mapPlayer) => {
         .map(({ titular, ...rest }) => rest);
 };
 
-const identifyTeams = (teams, gameData) => {
-    const aguada = teams.find(t =>
+const identifyTeams = (teams = []) => {
+    const validTeams = Array.isArray(teams)
+        ? teams.filter(Boolean)
+        : [];
+
+    const aguada = validTeams.find(t =>
         t.code === 'AGU' ||
         t.name?.toLowerCase().includes('aguada')
     );
 
-    const adversario = teams.find(t => t !== aguada);
+    const adversario = validTeams.find(t => t !== aguada);
 
-    if (!aguada || !adversario) {
-        throw new Error('No se pudo identificar Aguada o rival');
+    if (aguada && adversario) {
+        return { aguada, adversario };
     }
 
-    return { aguada, adversario };
+    if (validTeams.length >= 2) {
+        return {
+            aguada: validTeams[0],
+            adversario: validTeams[1]
+        };
+    }
+
+    if (validTeams.length === 1) {
+        return {
+            aguada: validTeams[0],
+            adversario: {}
+        };
+    }
+
+    return { aguada: {}, adversario: {} };
 };
 
 const getCoachName = (team) => team.coach || null;
