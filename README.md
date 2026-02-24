@@ -12,3 +12,4 @@ Cada vez que se haga un cambio de código que vaya a producción, actualizar ese
 ```bash
 npm install
 npm start
+```

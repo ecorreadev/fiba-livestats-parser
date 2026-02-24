@@ -17,8 +17,7 @@ app.post('/api/parse', async (req, res) => {
     try {
         const gameId = url.split('/').filter(Boolean).pop();
         const data = await getFibaStats(gameId);
-        
-        // Agregar datos del usuario al resultado
+
         if (userData) {
             const result = {
                 ...userData,
@@ -26,7 +25,7 @@ app.post('/api/parse', async (req, res) => {
             };
             return res.json(result);
         }
-        
+
         res.json(data);
     } catch (err) {
         console.error(err);
