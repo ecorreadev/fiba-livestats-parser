@@ -13,6 +13,7 @@ const capitalize = (str) => {
 
 const mapPlayer = (p) => ({
     titular: Boolean(p.starter),
+    starter: Number(p.starter) === 1,
 
     numero: Number(p.shirtNumber) || null,
     jugador: [p.firstName, p.familyName].filter(Boolean).join(' '),
