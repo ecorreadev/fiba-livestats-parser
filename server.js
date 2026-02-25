@@ -7,6 +7,22 @@ const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
+const formatHorario = (value) => {
+    if (typeof value !== 'string') {
+        return '';
+    }
+
+    const match = value.trim().match(/^(\d{1,2}):(\d{2})/);
+    if (!match) {
+        return '';
+    }
+
+    const hours = String(Math.max(0, Math.min(23, Number(match[1])))).padStart(2, '0');
+    const minutes = String(Math.max(0, Math.min(59, Number(match[2])))).padStart(2, '0');
+
+    return `${hours}:${minutes}`;
+};
+
 app.post('/api/parse', async (req, res) => {
     const { url, userData } = req.body;
 
@@ -19,8 +35,13 @@ app.post('/api/parse', async (req, res) => {
         const data = await getFibaStats(gameId);
 
         if (userData) {
-            const result = {
+            const normalizedUserData = {
                 ...userData,
+                horario: formatHorario(userData.horario)
+            };
+
+            const result = {
+                ...normalizedUserData,
                 ...data
             };
             return res.json(result);

@@ -48,6 +48,10 @@
     </div>
 
     <div class="input-row">
+      <input id="horario" type="time" placeholder="Horario" />
+    </div>
+
+    <div class="input-row">
       <input id="fechaLiga" type="number" placeholder="Fecha Liga" />
       <input id="dia" type="number" placeholder="Día" />
     </div>
@@ -89,7 +93,7 @@
 // Validar que todos los inputs estén llenos
 function validateInputs() {
   const requiredFields = [
-    'url', 'torneo', 'liga', 'cancha', 'fecha', 'fechaLiga', 'dia', 'mes'
+    'url', 'torneo', 'liga', 'cancha', 'fecha', 'horario', 'fechaLiga', 'dia', 'mes'
   ];
   
   const allFilled = requiredFields.every(id => {
@@ -106,9 +110,26 @@ document.getElementById('torneo').addEventListener('input', validateInputs);
 document.getElementById('liga').addEventListener('input', validateInputs);
 document.getElementById('cancha').addEventListener('input', validateInputs);
 document.getElementById('fecha').addEventListener('input', validateInputs);
+document.getElementById('horario').addEventListener('input', validateInputs);
 document.getElementById('fechaLiga').addEventListener('input', validateInputs);
 document.getElementById('dia').addEventListener('input', validateInputs);
 document.getElementById('mes').addEventListener('input', validateInputs);
+
+function formatHorario(value) {
+  if (!value) {
+    return '';
+  }
+
+  const match = value.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) {
+    return '';
+  }
+
+  const hours = String(Math.max(0, Math.min(23, Number(match[1])))).padStart(2, '0');
+  const minutes = String(Math.max(0, Math.min(59, Number(match[2])))).padStart(2, '0');
+
+  return `${hours}:${minutes}`;
+}
 
 async function run() {
   const url = document.getElementById('url').value;
@@ -132,6 +153,7 @@ async function run() {
     reclasificatorio: document.getElementById('reclasificatorio').checked,
     fechaLiga: parseInt(document.getElementById('fechaLiga').value),
     fecha: document.getElementById('fecha').value,
+    horario: formatHorario(document.getElementById('horario').value),
     dia: parseInt(document.getElementById('dia').value),
     mes: parseInt(document.getElementById('mes').value),
     cancha: document.getElementById('cancha').value
