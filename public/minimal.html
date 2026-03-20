@@ -86,7 +86,7 @@ async function login() {
   statusDiv.textContent = '⏳ Autenticando...';
 
   try {
-    const res = await fetch('/auth/login', {
+    const res = await fetch('https://aguada-stats-api.vercel.app/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -196,7 +196,7 @@ async function patchMatch() {
   statusDiv.textContent = '⏳ Enviando actualización...';
 
   try {
-    const res = await fetch(`/api/patch/${matchId}`, {
+    const res = await fetch(`https://aguada-stats-api.vercel.app/partidos/${matchId}`, {
       method: 'PATCH',
       headers: { 
         'Content-Type': 'application/json',
