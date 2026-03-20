@@ -54,6 +54,31 @@ app.post('/api/parse', async (req, res) => {
     }
 });
 
+app.post('/api/parse-minimal', async (req, res) => {
+    const { url, userData } = req.body;
+
+    if (!url || !url.includes('fibalivestats')) {
+        return res.status(400).json({ error: 'URL inválida' });
+    }
+
+    try {
+        const gameId = url.split('/').filter(Boolean).pop();
+        const data = await getFibaStats(gameId);
+
+        const result = {
+            hora: userData?.hora || null,
+            aguadaShots: data.aguadaShots || [],
+            adversarioShots: data.adversarioShots || [],
+            pbp: data.pbp || []
+        };
+
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
     console.log(`Servidor corriendo en puerto ${PORT}`)
