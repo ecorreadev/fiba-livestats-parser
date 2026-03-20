@@ -52,6 +52,10 @@
     <div class="input-row full">
       <input id="matchId" type="text" placeholder="ID del partido existente" />
     </div>
+
+    <div class="input-row full">
+      <input id="horario" type="time" placeholder="Hora" />
+    </div>
   </div>
 
   <div class="button-group" id="actionsGroup" style="display:none;">
@@ -66,7 +70,7 @@
 
 <script>
 let currentParsedData = null;
-let authToken = null;
+let jwt = null;
 
 // Login
 async function login() {
@@ -98,7 +102,11 @@ async function login() {
     }
 
     const data = await res.json();
-    authToken = data.token;
+    jwt = data.jwt || data.token || data.accessToken || null;
+
+    if (!jwt) {
+      throw new Error('No se recibió JWT en la respuesta de login');
+    }
     
     statusDiv.textContent = '✅ ¡Autenticación exitosa!';
     
@@ -116,17 +124,36 @@ async function login() {
 function validateInputs() {
   const url = document.getElementById('url').value;
   const matchId = document.getElementById('matchId').value;
+  const horario = document.getElementById('horario').value;
   
-  const allFilled = url && url.trim() !== '' && matchId && matchId.trim() !== '';
+  const allFilled = url && url.trim() !== '' && matchId && matchId.trim() !== '' && horario && horario.trim() !== '';
   document.getElementById('processBtn').disabled = !allFilled;
 }
 
 // Agregar listeners a todos los inputs
 document.getElementById('url').addEventListener('input', validateInputs);
 document.getElementById('matchId').addEventListener('input', validateInputs);
+document.getElementById('horario').addEventListener('input', validateInputs);
+
+function formatHorario(value) {
+  if (!value) {
+    return '';
+  }
+
+  const match = value.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) {
+    return '';
+  }
+
+  const hours = String(Math.max(0, Math.min(23, Number(match[1])))).padStart(2, '0');
+  const minutes = String(Math.max(0, Math.min(59, Number(match[2])))).padStart(2, '0');
+
+  return `${hours}:${minutes}`;
+}
 
 async function run() {
   const url = document.getElementById('url').value;
+  const horario = document.getElementById('horario').value;
   const statusDiv = document.getElementById('statusMessage');
   
   // Mostrar el div de estado
@@ -149,7 +176,12 @@ async function run() {
     const res = await fetch('/api/parse-minimal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, userData: {} })
+      body: JSON.stringify({
+        url,
+        userData: {
+          hora: formatHorario(horario)
+        }
+      })
     });
 
     updateStatus('🔄 Procesando información...');
@@ -185,7 +217,7 @@ async function patchMatch() {
     return;
   }
 
-  if (!authToken) {
+  if (!jwt) {
     statusDiv.textContent = '❌ Debes autenticarte primero';
     statusDiv.style.color = 'red';
     return;
@@ -200,7 +232,7 @@ async function patchMatch() {
       method: 'PATCH',
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
+        'Authorization': `Bearer ${jwt}`
       },
       body: JSON.stringify(currentParsedData)
     });
