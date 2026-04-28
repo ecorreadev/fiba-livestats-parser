@@ -227,6 +227,7 @@ async function patchMatch() {
   statusDiv.style.color = 'green';
   statusDiv.textContent = '⏳ Enviando actualización...';
 
+
   try {
     const res = await fetch(`https://aguada-stats-api.vercel.app/partidos/${matchId}`, {
       method: 'PATCH',
