@@ -62,7 +62,29 @@ function validateInputs() {
     return value && value.trim() !== '';
   });
 
-  document.getElementById('processBtn').disabled = !allFilled;
+  const playoffsChecked = document.getElementById('playoffs').checked;
+  const playoffsFieldsFilled = !playoffsChecked || (
+    document.getElementById('playoffsEtapa').value.trim() !== '' &&
+    document.getElementById('posicionAguada').value.trim() !== '' &&
+    document.getElementById('posicionAdversario').value.trim() !== ''
+  );
+
+  document.getElementById('processBtn').disabled = !(allFilled && playoffsFieldsFilled);
+}
+
+function togglePlayoffsFields() {
+  const playoffsChecked = document.getElementById('playoffs').checked;
+  const playoffsFields = document.getElementById('playoffsFields');
+
+  playoffsFields.style.display = playoffsChecked ? 'block' : 'none';
+
+  if (!playoffsChecked) {
+    document.getElementById('playoffsEtapa').value = '';
+    document.getElementById('posicionAguada').value = '';
+    document.getElementById('posicionAdversario').value = '';
+  }
+
+  validateInputs();
 }
 
 function formatHorario(value) {
@@ -97,6 +119,9 @@ async function run() {
     liga: document.getElementById('liga').value,
     temporadaRegular: document.getElementById('temporadaRegular').checked,
     playoffs: document.getElementById('playoffs').checked,
+    playoffsEtapa: document.getElementById('playoffs').checked ? document.getElementById('playoffsEtapa').value : null,
+    posicionAguada: document.getElementById('playoffs').checked ? parseInt(document.getElementById('posicionAguada').value) : null,
+    posicionAdversario: document.getElementById('playoffs').checked ? parseInt(document.getElementById('posicionAdversario').value) : null,
     superLiga: document.getElementById('superLiga').checked,
     liguilla: document.getElementById('liguilla').checked,
     reclasificatorio: document.getElementById('reclasificatorio').checked,
@@ -379,11 +404,18 @@ function copyToClipboard() {
 
 // Inicializar event listeners cuando el DOM esté cargado
 document.addEventListener('DOMContentLoaded', function() {
-  const inputIds = ['url', 'torneo', 'liga', 'cancha', 'fecha', 'horario', 'fechaLiga', 'dia', 'mes'];
+  const inputIds = ['url', 'torneo', 'liga', 'cancha', 'fecha', 'horario', 'fechaLiga', 'dia', 'mes', 'playoffsEtapa', 'posicionAguada', 'posicionAdversario'];
   inputIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', validateInputs);
     }
   });
+
+  const playoffsCheckbox = document.getElementById('playoffs');
+  if (playoffsCheckbox) {
+    playoffsCheckbox.addEventListener('change', togglePlayoffsFields);
+  }
+
+  togglePlayoffsFields();
 });
