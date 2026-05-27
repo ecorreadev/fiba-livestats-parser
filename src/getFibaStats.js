@@ -7,43 +7,84 @@ const {
     getCoachName
 } = require('./parsers');
 
-const generateCuartos = (aguada, adversario) => {
-    const aguadaScores = [
-        parseInt(aguada.p1_score) || 0,
-        parseInt(aguada.p2_score) || 0,
-        parseInt(aguada.p3_score) || 0,
-        parseInt(aguada.p4_score) || 0
-    ];
+const getPeriodScores = (team = {}) => {
+    return Object.entries(team)
+        .map(([key, value]) => {
+            const match = key.match(/^p(\d+)_score$/);
+            if (!match) {
+                return null;
+            }
 
-    const adversarioScores = [
-        parseInt(adversario.p1_score) || 0,
-        parseInt(adversario.p2_score) || 0,
-        parseInt(adversario.p3_score) || 0,
-        parseInt(adversario.p4_score) || 0
-    ];
+            return {
+                period: Number(match[1]),
+                score: parseInt(value, 10) || 0
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.period - b.period);
+};
+
+const buildPeriodScoreMap = (periodScores = []) => {
+    const scoreMap = new Map();
+
+    for (const { period, score } of periodScores) {
+        scoreMap.set(period, score);
+    }
+
+    return scoreMap;
+};
+
+const generateCuartosData = (aguada, adversario) => {
+    const aguadaPeriodScores = getPeriodScores(aguada);
+    const adversarioPeriodScores = getPeriodScores(adversario);
+    const aguadaScoreMap = buildPeriodScoreMap(aguadaPeriodScores);
+    const adversarioScoreMap = buildPeriodScoreMap(adversarioPeriodScores);
+
+    const maxPeriod = Math.max(
+        4,
+        ...aguadaPeriodScores.map(p => p.period),
+        ...adversarioPeriodScores.map(p => p.period)
+    );
 
     const cuartos = [];
+    const alargues = [];
     let aguadaAccumulated = 0;
     let adversarioAccumulated = 0;
 
-    for (let i = 0; i < 4; i++) {
-        const aguadaParcial = aguadaScores[i];
-        const adversarioParcial = adversarioScores[i];
+    for (let period = 1; period <= maxPeriod; period++) {
+        const aguadaParcial = aguadaScoreMap.get(period) || 0;
+        const adversarioParcial = adversarioScoreMap.get(period) || 0;
 
         aguadaAccumulated += aguadaParcial;
         adversarioAccumulated += adversarioParcial;
 
+        const diferenciaTotal = aguadaAccumulated - adversarioAccumulated;
+        const diferenciaParcial = aguadaParcial - adversarioParcial;
+
         cuartos.push({
             aguadaTotal: aguadaAccumulated,
             adversarioTotal: adversarioAccumulated,
-            diferenciaTotal: aguadaAccumulated - adversarioAccumulated,
+            diferenciaTotal,
+            diferencia: diferenciaTotal,
             aguadaParcial,
             adversarioParcial,
-            diferenciaParcial: aguadaParcial - adversarioParcial
+            diferenciaParcial
         });
+
+        // Si existe un período siguiente luego de este empate, el alargue arranca en ese score.
+        if (period >= 4 && period < maxPeriod && aguadaAccumulated === adversarioAccumulated) {
+            alargues.push(String(aguadaAccumulated));
+        }
     }
 
-    return cuartos;
+    const cantidadAlargues = Math.max(0, maxPeriod - 4);
+
+    return {
+        cuartos,
+        alargue: cantidadAlargues > 0,
+        cantidadAlargues,
+        alargues
+    };
 };
 
 const mapShot = (shot = {}) => ({
@@ -134,7 +175,12 @@ module.exports = async function getFibaStats(GAME_ID) {
     const diferencia = puntosAguada - puntosAdversario;
     const ganado = puntosAguada > puntosAdversario;
     const local = teams[0] === aguada;
-    const cuartos = generateCuartos(aguada, adversario);
+    const {
+        cuartos,
+        alargue,
+        cantidadAlargues,
+        alargues
+    } = generateCuartosData(aguada, adversario);
     const team1 = gameData?.tm?.['1'];
     const team2 = gameData?.tm?.['2'];
     const team1IsAguada =
@@ -151,6 +197,9 @@ module.exports = async function getFibaStats(GAME_ID) {
     const result = {
         adversario: adversario.name || null,
         local,
+        alargue,
+        cantidadAlargues,
+        alargues,
         cuartos,
         jueces: mapReferees(gameData.officials),
         resultado: mapGameResult(aguada, adversario),
