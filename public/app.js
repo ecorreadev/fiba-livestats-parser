@@ -216,6 +216,31 @@ function formatHorario(value) {
   return `${hours}:${minutes}`;
 }
 
+function setTodayDefaults() {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const year = String(today.getFullYear());
+
+  const fechaInput = document.getElementById('fecha');
+  const diaInput = document.getElementById('dia');
+  const mesInput = document.getElementById('mes');
+
+  if (fechaInput && !fechaInput.value) {
+    fechaInput.value = `${month}/${day}/${year}`;
+  }
+
+  if (diaInput && !diaInput.value) {
+    diaInput.value = String(today.getDate());
+  }
+
+  if (mesInput && !mesInput.value) {
+    mesInput.value = String(today.getMonth() + 1);
+  }
+}
+
+setTodayDefaults();
+
 async function run() {
   const url = document.getElementById('url').value;
   const statusDiv = document.getElementById('statusMessage');
