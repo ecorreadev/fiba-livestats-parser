@@ -1,5 +1,118 @@
 let jwt = null;
 let currentParsedData = null;
+let jugadoresIndexPromise = null;
+
+const normalizePlayerName = (name) => {
+  if (!name) return '';
+
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const buildJugadoresNameIndex = (players = []) => {
+  const index = new Map();
+
+  for (const player of players) {
+    const canonicalName = String(player?.nombre || '').trim();
+    if (!canonicalName) continue;
+
+    const key = normalizePlayerName(canonicalName);
+    if (!key || index.has(key)) continue;
+
+    index.set(key, canonicalName);
+  }
+
+  return index;
+};
+
+const getJugadoresNameIndex = async () => {
+  if (!jugadoresIndexPromise) {
+    jugadoresIndexPromise = fetch('https://aguada-stats-jugadores-api.vercel.app/jugadores')
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`No se pudo obtener catálogo de jugadores (${res.status})`);
+        }
+
+        const players = await res.json();
+        return buildJugadoresNameIndex(Array.isArray(players) ? players : []);
+      })
+      .catch((error) => {
+        jugadoresIndexPromise = null;
+        throw error;
+      });
+  }
+
+  return jugadoresIndexPromise;
+};
+
+const resolveCanonicalPlayerName = async (rawName) => {
+  const key = normalizePlayerName(rawName);
+  if (!key) return null;
+
+  try {
+    const index = await getJugadoresNameIndex();
+    return index.get(key) || null;
+  } catch (error) {
+    console.warn('No se pudo resolver nombre canónico:', error);
+    return null;
+  }
+};
+
+const buildCorrectionsStatusMessage = (corrections = []) => {
+  if (!Array.isArray(corrections) || corrections.length === 0) {
+    return '';
+  }
+
+  const visibleCorrections = corrections.slice(0, 6)
+    .map(({ from, to }) => `${from} -> ${to}`)
+    .join(', ');
+  const remaining = corrections.length - 6;
+
+  return `Tildes autocorregidas (${corrections.length}): ${visibleCorrections}${remaining > 0 ? `, +${remaining} mas` : ''}.`;
+};
+
+const applyCanonicalNamesToParsedData = async (parsedData) => {
+  if (!parsedData || !Array.isArray(parsedData.aguadaStats)) {
+    return {
+      parsedData,
+      corrections: []
+    };
+  }
+
+  const corrections = [];
+
+  const canonicalEntries = await Promise.all(
+    parsedData.aguadaStats.map(async (player) => {
+      const rawName = String(player?.jugador || '').trim();
+      const canonicalName = await resolveCanonicalPlayerName(player?.jugador);
+      if (!canonicalName) {
+        return player;
+      }
+
+      if (rawName && canonicalName !== rawName) {
+        corrections.push({ from: rawName, to: canonicalName });
+      }
+
+      return {
+        ...player,
+        jugador: canonicalName
+      };
+    })
+  );
+
+  return {
+    parsedData: {
+      ...parsedData,
+      aguadaStats: canonicalEntries
+    },
+    corrections
+  };
+};
 
 // Login
 async function login() {
@@ -153,13 +266,17 @@ async function run() {
     }
 
     const json = await res.json();
-    currentParsedData = json;
+    const { parsedData, corrections } = await applyCanonicalNamesToParsedData(json);
+    currentParsedData = parsedData;
     
     updateStatus('📊 Estructurando datos...');
     
-    document.getElementById('out').value = JSON.stringify(json, null, 2);
+    document.getElementById('out').value = JSON.stringify(currentParsedData, null, 2);
     
-    updateStatus('✅ ¡Procesamiento completado exitosamente!');
+    const correctionMessage = buildCorrectionsStatusMessage(corrections);
+    updateStatus(correctionMessage
+      ? `✅ ¡Procesamiento completado exitosamente! ${correctionMessage}`
+      : '✅ ¡Procesamiento completado exitosamente!');
     
     document.getElementById('copyBtn').style.display = 'inline-block';
     if (jwt) {
@@ -227,6 +344,11 @@ async function ingresarPartido() {
     let jugadoresUpdate = [];
     for (let i = 0; i < jugadores.length; i++) {
       try {
+        const canonicalName = await resolveCanonicalPlayerName(jugadores[i].jugador);
+        if (canonicalName) {
+          jugadores[i].jugador = canonicalName;
+        }
+
         const playerRes = await fetch(`https://aguada-stats-jugadores-api.vercel.app/jugador/${encodeURIComponent(jugadores[i].jugador)}`);
         if (playerRes.ok) {
           const playerData = await playerRes.json();
