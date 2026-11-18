@@ -1,6 +1,7 @@
 let jwt = null;
 let currentParsedData = null;
 let jugadoresIndexPromise = null;
+const API_BASE_URL = 'https://api.aguadastats.com/api';
 
 const normalizePlayerName = (name) => {
   if (!name) return '';
@@ -18,7 +19,9 @@ const buildJugadoresNameIndex = (players = []) => {
   const index = new Map();
 
   for (const player of players) {
-    const canonicalName = String(player?.nombre || '').trim();
+    const canonicalName = String(
+      typeof player === 'string' ? player : player?.nombre || player?.jugador || ''
+    ).trim();
     if (!canonicalName) continue;
 
     const key = normalizePlayerName(canonicalName);
@@ -32,7 +35,7 @@ const buildJugadoresNameIndex = (players = []) => {
 
 const getJugadoresNameIndex = async () => {
   if (!jugadoresIndexPromise) {
-    jugadoresIndexPromise = fetch('https://aguada-stats-jugadores-api.vercel.app/jugadores')
+    jugadoresIndexPromise = fetch(`${API_BASE_URL}/listado/listadoJugadores`)
       .then(async (res) => {
         if (!res.ok) {
           throw new Error(`No se pudo obtener catálogo de jugadores (${res.status})`);
@@ -132,7 +135,7 @@ async function login() {
   statusDiv.textContent = '⏳ Autenticando...';
 
   try {
-    const res = await fetch('https://aguada-stats-api.vercel.app/auth/login', {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -304,9 +307,6 @@ async function run() {
       : '✅ ¡Procesamiento completado exitosamente!');
     
     document.getElementById('copyBtn').style.display = 'inline-block';
-    if (jwt) {
-      document.getElementById('ingresarPartidoBtn').style.display = 'inline-block';
-    }
   } catch (error) {
     updateStatus('❌ Error: ' + error.message);
     statusDiv.style.color = 'red';
@@ -331,11 +331,12 @@ async function ingresarPartido() {
   statusDiv.style.display = 'block';
   statusDiv.style.color = 'green';
   statusDiv.textContent = '⏳ Ingresando partido...';
-  document.getElementById('ingresarPartidoBtn').disabled = true;
+  const btn = document.getElementById('ingresarPartidoBtn');
+  if (btn) btn.disabled = true;
 
   try {
     // POST del partido
-    const postRes = await fetch('https://aguada-stats-api.vercel.app/partidos', {
+    const postRes = await fetch(`${API_BASE_URL}/partidos`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -359,7 +360,7 @@ async function ingresarPartido() {
 
     if (jugadores.length === 0) {
       statusDiv.textContent = '✅ ¡Partido ingresado exitosamente! (Sin jugadores para actualizar)';
-      document.getElementById('ingresarPartidoBtn').disabled = false;
+      if (btn) btn.disabled = false;
       return;
     }
 
@@ -374,11 +375,14 @@ async function ingresarPartido() {
           jugadores[i].jugador = canonicalName;
         }
 
-        const playerRes = await fetch(`https://aguada-stats-jugadores-api.vercel.app/jugador/${encodeURIComponent(jugadores[i].jugador)}`);
+        const playerRes = await fetch(`${API_BASE_URL}/perfil/${encodeURIComponent(jugadores[i].jugador)}`);
         if (playerRes.ok) {
-          const playerData = await playerRes.json();
-          if (Array.isArray(playerData) && playerData.length > 0) {
-            jugadoresUpdate.push({ index: i, playerData: playerData[0], stats: jugadores[i] });
+          const playerPayload = await playerRes.json();
+          const playerData = Array.isArray(playerPayload)
+            ? playerPayload[0]
+            : playerPayload?.jugador?.[0];
+          if (playerData) {
+            jugadoresUpdate.push({ index: i, playerData, stats: jugadores[i] });
           }
         }
       } catch (e) {
@@ -424,12 +428,12 @@ async function ingresarPartido() {
     }
 
     statusDiv.textContent = `✅ ¡Partido ingresado y ${updatedCount} jugadores actualizados exitosamente!`;
-    document.getElementById('ingresarPartidoBtn').disabled = false;
+    if (btn) btn.disabled = false;
   } catch (error) {
     console.error('Error:', error);
     statusDiv.textContent = '❌ Error: ' + error.message;
     statusDiv.style.color = 'red';
-    document.getElementById('ingresarPartidoBtn').disabled = false;
+    if (btn) btn.disabled = false;
   }
 }
 

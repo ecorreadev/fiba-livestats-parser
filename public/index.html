@@ -20,9 +20,6 @@
   textarea { width: 100%; box-sizing: border-box; font-family: monospace; }
   .copy-btn { padding: 8px 15px; background: #28a745; }
   .copy-btn:hover { background: #218838; }
-  #ingresarPartidoBtn { background: #28a745; }
-  #ingresarPartidoBtn:hover { background: #218838; }
-  #ingresarPartidoBtn:disabled { background: #ccc; }
   .status-message { color: green; font-weight: bold; margin-top: 10px; font-size: 16px; display: none; }
   .version-tag { margin: 0 0 15px; color: #555; font-size: 13px; }
   input[type="password"] { width: 100%; box-sizing: border-box; }
@@ -32,7 +29,7 @@
 
 <div class="container">
   <h2>FIBA LiveStats → JSON</h2>
-  <p class="version-tag">Versión en producción: v2026.02.23</p>
+  <p class="version-tag">Versión en producción: v2026.10.08</p>
 
   <div class="inputs-section" id="loginSection">
     <h3>Autenticación</h3>
@@ -117,7 +114,6 @@
   <div class="button-group" id="actionsGroup" style="display:none;">
     <button id="processBtn" onclick="run()" disabled>Procesar</button>
     <button class="copy-btn" id="copyBtn" onclick="copyToClipboard()" style="display:none;">Copiar Resultado</button>
-    <button id="ingresarPartidoBtn" onclick="ingresarPartido()" style="display:none; background: #28a745;">Ingresar Partido</button>
   </div>
 
   <div class="status-message" id="statusMessage"></div>
